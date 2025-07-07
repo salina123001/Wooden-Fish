@@ -41,9 +41,8 @@
       .text-shadow-lg {
         text-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
       }
-      /* --- 修正背景 --- */
+      /* --- 背景圖片與透明度設定 --- */
       .wood-pattern {
-        /* 修正：更新背景圖片連結 */
         background-image: url("https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3244038.jpg");
         background-size: cover;
         background-position: center;
@@ -52,7 +51,7 @@
         z-index: 1;
       }
 
-      /* 加上一個覆蓋層，讓內容更清晰 */
+      /* 加上一個覆蓋層，讓內容更清晰，並提供透明度效果 */
       body.wood-pattern::before {
         content: '';
         position: fixed; /* 使用 fixed 定位，使其覆蓋整個視窗 */
@@ -60,8 +59,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        /* 修正：根據使用者要求，提高透明度 (降低 alpha 值) */
-        background-color: rgba(245, 245, 220, 0.4); 
+        background-color: rgba(245, 245, 220, 0.4); /* 調整此處的 alpha 值 (0.4) 來控制透明度 */
         z-index: -1; /* 確保覆蓋層在內容之下 */
       }
       .fish-shadow {
@@ -182,7 +180,8 @@
   </nav>
 
   <!-- 主內容區 -->
-  <main class="container mx-auto px-4 pt-20 pb-16 min-h-screen">
+  <!-- 調整 main 元素以支持 flex 佈局，並減少底部填充 -->
+  <main class="container mx-auto px-4 pt-20 pb-4 min-h-screen flex flex-col">
     <!-- NEW: 修行模式切換 -->
     <section class="mb-6">
         <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-3 border border-primary/20">
@@ -214,13 +213,16 @@
     </section>
 
     <!-- 木魚互動區 -->
-    <section class="mb-8 relative">
-      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-8 border border-primary/20 min-h-[300px] flex flex-col items-center justify-center">
+    <!-- 讓此 section 能夠彈性伸展，並將內容置中 -->
+    <section class="mb-8 relative flex-grow flex flex-col items-center justify-center">
+      <!-- 移除 min-h-[300px]，並讓此 div 彈性伸展 -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-8 border border-primary/20 flex-grow flex flex-col items-center justify-center w-full">
         <div id="tapMessage" class="absolute top-8 text-center w-full text-accent text-2xl md:text-3xl font-kai text-shadow-lg z-20"></div>
         
-        <div id="woodenFishContainer" class="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 animate-float z-10" style="perspective: 1000px;">
+        <!-- 調整木魚容器尺寸，使其在手機上佔滿更多空間，電腦上適度放大 -->
+        <div id="woodenFishContainer" class="relative w-full h-full max-w-md max-h-md md:max-w-lg md:max-h-lg flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 animate-float z-10" style="perspective: 1000px;">
           <!-- 初始圖片會由 JS 更新 -->
-          <img id="woodenFish" src="" alt="傳統木魚" class="fish-shadow max-w-full max-h-full object-contain transition-all duration-500 rounded-lg">
+          <img id="woodenFish" src="" alt="傳統木魚" class="fish-shadow w-full h-full object-contain transition-all duration-500 rounded-lg">
           
           <div id="fishEffect" class="absolute inset-0 bg-gold/30 rounded-full opacity-0 transition-opacity duration-300 pointer-events-none"></div>
         </div>
