@@ -238,7 +238,7 @@
       <!-- 木魚皮膚選擇 -->
       <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
         <h2 class="text-primary font-kai text-xl mb-4 flex items-center">
-          <i class="fa fa-paint-brush text-secondary mr-2"></i> 木魚皮膚
+          <i class="fa fa-paint-brush text-secondary mr-2"></i> 木魚種類
         </h2>
         <div id="skinsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <!-- 木魚皮膚會透過JS動態載入 -->
@@ -252,6 +252,18 @@
         </h2>
         <div id="soundsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3">
           <!-- 木魚音色會透過JS動態載入 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- NEW: 提示文字選擇區塊 -->
+    <section class="mb-8">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
+        <h2 class="text-primary font-kai text-xl mb-4 flex items-center">
+          <i class="fa fa-commenting-o text-secondary mr-2"></i> 提示文字
+        </h2>
+        <div id="messagesContainer" class="grid grid-cols-1 gap-3">
+          <!-- 提示文字會透過JS動態載入 -->
         </div>
       </div>
     </section>
@@ -296,7 +308,7 @@
                 <i class="fa fa-cog text-secondary mr-2"></i> 設定
             </h2>
             <div class="space-y-3">
-                <p class="text-sm text-accent/80">如果遊戲出現問題或想重新開始，可以清除本機存檔。這個操作會重置您所有的功德和進度。</p>
+                <p class="text-sm text-accent/80">在忙碌的現代生活中，透過點擊木魚，為自己和他人累積功德，找回內心的平靜。如果遊戲出現問題或想重新開始，可以清除本機存檔，這個操作會重置您所有的功德和進度。</p>
                 <button id="resetDataBtn" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center">
                     <i class="fa fa-exclamation-triangle mr-2"></i> 清除所有存檔並重置遊戲
                 </button>
@@ -376,7 +388,7 @@
       <button id="closeSkinsModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
         <i class="fa fa-times text-xl"></i>
       </button>
-      <h2 class="text-primary font-kai text-2xl mb-4 text-center">木魚皮膚商店</h2>
+      <h2 class="text-primary font-kai text-2xl mb-4 text-center">木魚種類商店</h2>
       <div id="skinsShopContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-y-auto p-2">
         <!-- 皮膚商品會由 JS 動態載入 -->
       </div>
@@ -458,10 +470,10 @@
             availableMerits: 0,
             unlockedSkins: [0], 
             unlockedSounds: [0],
-            unlockedMessages: [0],
+            unlockedMessages: [0], // 確保初始化為包含預設訊息ID
             currentSkin: 0,
             currentSound: 0,
-            currentMessage: 0,
+            currentMessage: 0, // 確保初始化為預設訊息ID
             consecutiveDays: 0,
             lastTapDate: null,
             practiceMode: 'self',
@@ -526,7 +538,7 @@
             { rank: 2, name: "釋迦牟尼", merits: 88888, avatar: "https://picsum.photos/id/1002/100/100" },
             { rank: 3, name: "觀世音菩薩", merits: 77777, avatar: "https://picsum.photos/id/1003/100/100" },
             { rank: 4, name: "彌勒佛", merits: 66666, avatar: "https://picsum.photos/id/1004/100/100" },
-            { rank: 5, name: "韋馱菩薩", merits: 55555, avatar: "https://picsum.photos/id/1005/100/100" },
+            { rank: 5, name: "財神爺", merits: 55555, avatar: "https://picsum.photos/id/1005/100/100" },
           ],
           
           soundElements: {
@@ -551,6 +563,7 @@
           availableMerits: document.getElementById('availableMerits'),
           skinsContainer: document.getElementById('skinsContainer'),
           soundsContainer: document.getElementById('soundsContainer'),
+          messagesContainer: document.getElementById('messagesContainer'), // 新增提示文字容器
           achievementsContainer: document.getElementById('achievementsContainer'),
           tasksContainer: document.getElementById('tasksContainer'),
           leaderboardContainer: document.getElementById('leaderboardContainer'),
@@ -611,6 +624,7 @@
             updateMeritsDisplay();
             loadSkins();
             loadSounds();
+            loadMessages(); // 新增載入提示文字
             loadAchievements();
             loadTasks();
             loadLeaderboard();
@@ -628,7 +642,7 @@
             elements.closeLoginModal.addEventListener('click', closeLoginModal);
             elements.closeSkinsModal.addEventListener('click', closeSkinsModal);
             elements.closeSoundsModal.addEventListener('click', closeSoundsModal);
-            elements.closeMessagesModal.addEventListener('click', closeMessagesModal);
+            elements.closeMessagesModal.addEventListener('click', closeMessagesModal); // 新增關閉提示文字商店事件
             window.addEventListener('scroll', handleScroll);
             elements.resetDataBtn.addEventListener('click', handleResetData);
             elements.confirmModalCancelBtn.addEventListener('click', closeConfirmModal);
@@ -802,6 +816,42 @@
           soundsCountElement.className = 'col-span-2 md:col-span-4 text-center text-accent/70 text-sm mb-2';
           soundsCountElement.textContent = `已解鎖 ${unlockedSoundsCount}/${totalSoundsCount} 種音色`;
           elements.soundsContainer.appendChild(soundsCountElement);
+        }
+
+        // 新增載入提示文字的函數
+        function loadMessages() {
+          elements.messagesContainer.innerHTML = '';
+          
+          const currentMessage = woodenFishData.messages.find(m => m.id === woodenFishData.user.currentMessage) || woodenFishData.messages[0];
+          const currentMessageElement = document.createElement('div');
+          currentMessageElement.className = 'col-span-1 mb-4';
+          currentMessageElement.innerHTML = `
+            <div class="bg-primary/10 rounded-xl p-3 flex items-center">
+              <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-secondary/20 flex items-center justify-center mr-4 border-2 border-white shadow-md">
+                <i class="fa fa-commenting-o text-2xl text-secondary"></i>
+              </div>
+              <div class="flex-grow">
+                <h3 class="font-kai text-lg md:text-xl text-primary font-bold">當前提示文字：${currentMessage.text}</h3>
+                <div class="flex items-center mt-1">
+                  <span class="text-sm text-accent/80">點擊更換提示文字</span>
+                  <button id="changeMessageBtn" class="ml-2 bg-primary hover:bg-primary/90 text-white px-3 py-1 rounded-md text-sm transition-all duration-300 transform hover:scale-105">
+                    <i class="fa fa-commenting-o mr-1"></i> 更換
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          elements.messagesContainer.appendChild(currentMessageElement);
+          
+          document.getElementById('changeMessageBtn').addEventListener('click', openMessagesModal);
+          
+          const unlockedMessagesCount = woodenFishData.user.unlockedMessages.length;
+          const totalMessagesCount = woodenFishData.messages.length;
+          
+          const messagesCountElement = document.createElement('div');
+          messagesCountElement.className = 'col-span-1 text-center text-accent/70 text-sm mb-2';
+          messagesCountElement.textContent = `已解鎖 ${unlockedMessagesCount}/${totalMessagesCount} 種提示文字`;
+          elements.messagesContainer.appendChild(messagesCountElement);
         }
 
         function loadAchievements() {
@@ -1019,24 +1069,31 @@
           playCurrentSound();
           showTapEffect();
           
-          let baseMessage = "";
+          let displayMessage = ""; // 這將是最終要顯示的訊息
+
+          // 1. 優先顯示來自任務/成就的訊息（如果有的話）
           if (eventMessages.length > 0) {
-              baseMessage = eventMessages[0];
+              displayMessage = eventMessages[0]; // 使用第一個事件訊息
           } else {
-              const unlockedMessages = woodenFishData.messages.filter(m => m.unlocked);
-              if (unlockedMessages.length > 0) {
-                  const randomIndex = Math.floor(Math.random() * unlockedMessages.length);
-                  baseMessage = unlockedMessages[randomIndex].text;
+              // 2. 如果沒有事件訊息，則使用使用者選擇的訊息
+              const selectedMessageObj = woodenFishData.messages.find(m => m.id === woodenFishData.user.currentMessage);
+              if (selectedMessageObj) {
+                  displayMessage = selectedMessageObj.text;
+              } else {
+                  // 預設值，如果沒有找到選定的訊息（理論上不會發生，因為預設訊息總是解鎖的）
+                  displayMessage = "功德 +1";
               }
           }
 
-          let finalMessage = baseMessage;
+          // 3. 如果在「替他人祈福」模式下，且訊息是「+1」類型，則加上祈福對象的名稱
           if (woodenFishData.user.practiceMode === 'other' && woodenFishData.user.prayForName) {
-              if (baseMessage.includes('+1')) {
-                  finalMessage = `${woodenFishData.user.prayForName} ${baseMessage}`;
+              // 檢查訊息是否包含 "+1" 或 "功德" 來判斷是否為「+1」類型訊息
+              if (displayMessage.includes('+1') || displayMessage.includes('功德')) { 
+                  displayMessage = `${woodenFishData.user.prayForName} ${displayMessage}`;
               }
           }
-          showTapMessage(finalMessage);
+          
+          showTapMessage(displayMessage); // 顯示最終訊息
           
           loadLeaderboard();
           saveUserData();
@@ -1269,7 +1326,7 @@
                   <div class="flex justify-between items-center mt-1">
                     <span class="text-xs text-gray-500">未解鎖</span>
                     <button onclick="purchaseSkin(${skin.id})" class="text-xs bg-secondary hover:bg-secondary/90 text-primary px-2 py-1 rounded transition-colors duration-200">
-                      購買
+                      花費功德
                     </button>
                   </div>
                 </div>
@@ -1362,7 +1419,7 @@
                   <div class="flex justify-between items-center mt-1">
                     <span class="text-xs text-gray-500">未解鎖</span>
                     <button onclick="purchaseSound(${sound.id})" class="text-xs bg-secondary hover:bg-secondary/90 text-primary px-2 py-1 rounded transition-colors duration-200">
-                      購買
+                      花費功德
                     </button>
                   </div>
                 </div>
@@ -1421,7 +1478,8 @@
             const isUnlocked = woodenFishData.user.unlockedMessages.includes(message.id);
             
             if (isUnlocked) {
-              messageElement.className = `relative rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg`;
+              const isActive = message.id === woodenFishData.user.currentMessage; // 檢查是否為當前選定的訊息
+              messageElement.className = `relative ${isActive ? 'ring-2 ring-primary' : ''} rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg`;
               messageElement.innerHTML = `
                 <div class="h-32 bg-primary/5 flex items-center justify-center p-2">
                   <span class="font-kai text-2xl text-center text-gray-600">${message.text}</span>
@@ -1429,9 +1487,15 @@
                 <div class="p-2 bg-white">
                   <h3 class="font-kai text-primary font-bold text-sm truncate">${message.text}</h3>
                   <div class="flex justify-between items-center mt-1">
-                    <span class="text-xs text-gray-500">已解鎖</span>
+                    <span class="text-xs ${isActive ? 'text-primary' : 'text-gray-500'}">
+                      ${isActive ? '當前使用' : '已解鎖'}
+                    </span>
+                    ${isActive ? '' : `<button onclick="selectMessage(${message.id})" class="text-xs bg-primary hover:bg-primary/90 text-white px-2 py-1 rounded transition-colors duration-200">
+                      使用
+                    </button>`}
                   </div>
                 </div>
+                ${isActive ? '<div class="absolute top-1 right-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full shadow-md">✓</div>' : ''}
               `;
             } else {
               messageElement.className = 'relative rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg';
@@ -1447,7 +1511,7 @@
                   <div class="flex justify-between items-center mt-1">
                     <span class="text-xs text-gray-500">未解鎖</span>
                     <button onclick="purchaseMessage(${message.id})" class="text-xs bg-secondary hover:bg-secondary/90 text-primary px-2 py-1 rounded transition-colors duration-200">
-                      購買
+                      花費功德
                     </button>
                   </div>
                 </div>
@@ -1464,13 +1528,22 @@
             woodenFishData.user.availableMerits -= message.price;
             woodenFishData.user.unlockedMessages.push(messageId);
             updateMeritsDisplay();
-            loadMessagesShop();
+            loadMessages(); // 更新主頁面提示文字區塊
+            loadMessagesShop(); // 更新商店彈出視窗
             checkCompletedAchievements();
             showTapMessage(`成功解鎖 ${message.text}!`);
             saveUserData();
           } else {
             showTapMessage(`功德不足，需要 ${message.price.toLocaleString()} 功德`);
           }
+        }
+
+        // 新增選擇提示文字的函數
+        window.selectMessage = function(messageId) {
+          woodenFishData.user.currentMessage = messageId;
+          loadMessages(); // 更新主頁面提示文字區塊
+          loadMessagesShop(); // 更新商店彈出視窗
+          saveUserData();
         }
 
         function toggleMobileMenu() {
