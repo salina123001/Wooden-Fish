@@ -1,0 +1,1598 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>電子木魚修行網</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#8C1515',
+            secondary: '#D4AF37',
+            accent: '#5D4037',
+            neutral: '#F5F5DC',
+            wood: '#8B4513',
+            jade: '#006400',
+            bronze: '#CD7F32',
+            gold: '#FFD700',
+            obsidian: '#2F4F4F',
+            crystal: '#F0F8FF',
+            rosewood: '#800000',
+            metal: '#A9A9A9',
+          },
+          fontFamily: {
+            song: ['SimSun', 'STSong', 'serif'],
+            kai: ['KaiTi', 'STKaiti', 'serif'],
+            yahei: ['Microsoft YaHei', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .text-shadow {
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      .text-shadow-lg {
+        text-shadow: 0 4px 8px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+      }
+      /* --- 修正背景 --- */
+      .wood-pattern {
+        /* 修正：更新背景圖片連結 */
+        background-image: url("https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S_3244038.jpg");
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed; /* 讓背景固定不隨滾動移動 */
+        position: relative; 
+        z-index: 1;
+      }
+
+      /* 加上一個覆蓋層，讓內容更清晰 */
+      body.wood-pattern::before {
+        content: '';
+        position: fixed; /* 使用 fixed 定位，使其覆蓋整個視窗 */
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        /* 修正：根據使用者要求，提高透明度 (降低 alpha 值) */
+        background-color: rgba(245, 245, 220, 0.4); 
+        z-index: -1; /* 確保覆蓋層在內容之下 */
+      }
+      .fish-shadow {
+        filter: drop-shadow(0 25px 25px rgba(0, 0, 0, 0.4));
+      }
+      .animate-float {
+        animation: float 4s ease-in-out infinite;
+      }
+      .animate-tap {
+        animation: tap 0.2s ease-in-out;
+      }
+      .animate-fade-up {
+        animation: fadeUp 1.5s ease-out forwards;
+      }
+      .animate-scale {
+        animation: scale 0.3s ease-in-out;
+      }
+      .animate-shine {
+        position: relative;
+        overflow: hidden;
+      }
+      .animate-shine::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: linear-gradient(
+          to right,
+          rgba(255, 255, 255, 0) 0%,
+          rgba(255, 255, 255, 0.3) 50%,
+          rgba(255, 255, 255, 0) 100%
+        );
+        transform: rotate(30deg);
+        animation: shine 2s infinite;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0) rotateX(0) rotateY(0); }
+        50% { transform: translateY(-15px) rotateX(8deg) rotateY(-5deg); }
+      }
+      @keyframes tap {
+        0% { transform: scale(1); }
+        50% { transform: scale(0.93) rotateX(5deg); }
+        100% { transform: scale(1); }
+      }
+      @keyframes fadeUp {
+        0% { opacity: 0; transform: translateY(20px); }
+        20% { opacity: 1; transform: translateY(0); }
+        80% { opacity: 1; transform: translateY(0); }
+        100% { opacity: 0; transform: translateY(-20px); }
+      }
+      @keyframes scale {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+      @keyframes shine {
+        0% { transform: translateX(-100%) rotate(30deg); }
+        100% { transform: translateX(100%) rotate(30deg); }
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen font-song wood-pattern">
+  <!-- 導航欄 -->
+  <nav class="bg-primary/90 text-white shadow-lg fixed top-0 w-full z-50 backdrop-blur-sm transition-all duration-300">
+    <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+      <div class="flex items-center space-x-2">
+        <i class="fa fa-bell-o text-secondary text-xl"></i>
+        <h1 class="text-xl md:text-2xl font-kai font-bold tracking-wider">電子木魚修行網</h1>
+      </div>
+      
+      <!-- Auth Container -->
+      <div class="flex items-center space-x-4">
+        <div id="authContainer" class="hidden md:flex items-center space-x-2">
+          <button id="loginBtn" class="bg-secondary hover:bg-secondary/80 text-primary px-4 py-1 rounded-md transition-all duration-300 transform hover:scale-105">
+            <i class="fa fa-user-circle-o mr-1"></i> 登入
+          </button>
+          <div id="userInfo" class="hidden items-center space-x-2">
+            <span id="usernameDisplay" class="text-white font-kai"></span>
+            <button id="logoutBtn" class="bg-accent hover:bg-accent/80 text-white px-3 py-1 rounded-md transition-all duration-300 text-sm">
+              <i class="fa fa-sign-out mr-1"></i>登出
+            </button>
+          </div>
+        </div>
+        <button id="menuBtn" class="md:hidden text-white text-xl">
+          <i class="fa fa-bars"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- 移動端菜單 -->
+    <div id="mobileMenu" class="md:hidden hidden bg-primary/95 backdrop-blur-sm absolute w-full">
+      <div class="container mx-auto px-4 py-3 flex flex-col space-y-3">
+        <div id="mobileAuthContainer">
+          <button id="mobileLoginBtn" class="w-full bg-secondary hover:bg-secondary/80 text-primary px-4 py-2 rounded-md transition-all duration-300">
+            <i class="fa fa-user-circle-o mr-1"></i> 登入
+          </button>
+          <div id="mobileUserInfo" class="hidden items-center justify-between bg-secondary/20 p-2 rounded-md">
+            <span id="mobileUsernameDisplay" class="text-white font-kai"></span>
+            <button id="mobileLogoutBtn" class="bg-accent hover:bg-accent/80 text-white px-3 py-1 rounded-md transition-all duration-300 text-sm">
+              <i class="fa fa-sign-out mr-1"></i>登出
+            </button>
+          </div>
+        </div>
+        <button id="mobileShopBtn" class="bg-accent/80 hover:bg-accent text-white px-4 py-2 rounded-md transition-all duration-300">
+          <i class="fa fa-shopping-bag mr-1"></i> 商店
+        </button>
+        <button id="mobileAchieveBtn" class="bg-accent/80 hover:bg-accent text-white px-4 py-2 rounded-md transition-all duration-300">
+          <i class="fa fa-trophy mr-1"></i> 成就
+        </button>
+        <button id="mobileSettingsBtn" class="bg-accent/80 hover:bg-accent text-white px-4 py-2 rounded-md transition-all duration-300">
+          <i class="fa fa-cog mr-1"></i> 設定
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主內容區 -->
+  <main class="container mx-auto px-4 pt-20 pb-16 min-h-screen">
+    <!-- NEW: 修行模式切換 -->
+    <section class="mb-6">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-3 border border-primary/20">
+            <div class="flex justify-center items-center space-x-2" id="modeSwitcher">
+                <button id="selfPracticeBtn" data-mode="self" class="mode-btn flex-1 px-4 py-2 rounded-lg font-kai text-lg transition-all duration-300">
+                    替自己修行
+                </button>
+                <button id="otherPracticeBtn" data-mode="other" class="mode-btn flex-1 px-4 py-2 rounded-lg font-kai text-lg transition-all duration-300">
+                    替他人祈福
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- 功德顯示區 -->
+    <section class="mb-8">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-primary/5 rounded-xl p-4 flex flex-col items-center">
+            <h2 class="text-accent font-kai text-lg md:text-xl mb-2">總功德值</h2>
+            <div class="text-3xl md:text-4xl font-bold text-primary" id="totalMerits">0</div>
+          </div>
+          <div class="bg-primary/5 rounded-xl p-4 flex flex-col items-center">
+            <h2 class="text-accent font-kai text-lg md:text-xl mb-2">可用功德值</h2>
+            <div class="text-3xl md:text-4xl font-bold text-primary" id="availableMerits">0</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 木魚互動區 -->
+    <section class="mb-8 relative">
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-8 border border-primary/20 min-h-[300px] flex flex-col items-center justify-center">
+        <div id="tapMessage" class="absolute top-8 text-center w-full text-accent text-2xl md:text-3xl font-kai text-shadow-lg z-20"></div>
+        
+        <div id="woodenFishContainer" class="relative w-64 h-64 md:w-80 md:h-80 flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-105 animate-float z-10" style="perspective: 1000px;">
+          <!-- 初始圖片會由 JS 更新 -->
+          <img id="woodenFish" src="" alt="傳統木魚" class="fish-shadow max-w-full max-h-full object-contain transition-all duration-500 rounded-lg">
+          
+          <div id="fishEffect" class="absolute inset-0 bg-gold/30 rounded-full opacity-0 transition-opacity duration-300 pointer-events-none"></div>
+        </div>
+        
+        <div class="mt-4 text-center text-accent/70 font-kai">
+          <p>點擊木魚積累功德</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 木魚皮膚和音色選擇 -->
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- 木魚皮膚選擇 -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
+        <h2 class="text-primary font-kai text-xl mb-4 flex items-center">
+          <i class="fa fa-paint-brush text-secondary mr-2"></i> 木魚皮膚
+        </h2>
+        <div id="skinsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <!-- 木魚皮膚會透過JS動態載入 -->
+        </div>
+      </div>
+      
+      <!-- 木魚音色選擇 -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
+        <h2 class="text-primary font-kai text-xl mb-4 flex items-center">
+          <i class="fa fa-music text-secondary mr-2"></i> 木魚音色
+        </h2>
+        <div id="soundsContainer" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <!-- 木魚音色會透過JS動態載入 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 底部功能區 -->
+    <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <!-- 成就系統 -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
+        <h2 class="text-primary font-kai text-xl mb-4 flex items-center">
+          <i class="fa fa-trophy text-secondary mr-2"></i> 成就
+        </h2>
+        <div id="achievementsContainer" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+          <!-- 成就會透過JS動態載入 -->
+        </div>
+      </div>
+      
+      <!-- 任務系統 -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
+        <h2 class="text-primary font-kai text-xl mb-4 flex items-center">
+          <i class="fa fa-list-alt text-secondary mr-2"></i> 任務
+        </h2>
+        <div id="tasksContainer" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+          <!-- 任務會透過JS動態載入 -->
+        </div>
+      </div>
+      
+      <!-- 排行榜 -->
+      <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
+        <h2 class="text-primary font-kai text-xl mb-4 flex items-center">
+          <i class="fa fa-star text-secondary mr-2"></i> 排行榜
+        </h2>
+        <div id="leaderboardContainer" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+          <!-- 排行榜會透過JS動態載入 -->
+        </div>
+      </div>
+    </section>
+
+    <!-- 設定區 -->
+    <section class="mb-8">
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl p-4 md:p-6 border border-primary/20">
+            <h2 class="text-primary font-kai text-xl mb-4 flex items-center">
+                <i class="fa fa-cog text-secondary mr-2"></i> 設定
+            </h2>
+            <div class="space-y-3">
+                <p class="text-sm text-accent/80">如果遊戲出現問題或想重新開始，可以清除本機存檔。這個操作會重置您所有的功德和進度。</p>
+                <button id="resetDataBtn" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-all duration-300 flex items-center justify-center">
+                    <i class="fa fa-exclamation-triangle mr-2"></i> 清除所有存檔並重置遊戲
+                </button>
+            </div>
+        </div>
+    </section>
+
+  </main>
+
+  <!-- 頁腳 -->
+  <footer class="bg-primary/90 text-white py-6 backdrop-blur-sm">
+    <div class="container mx-auto px-4">
+      <div class="flex flex-col md:flex-row justify-between items-center">
+        <div class="mb-4 md:mb-0">
+          <p class="text-center md:text-left">© 2025 電子木魚修行網. 保留所有權利.</p>
+        </div>
+        <div class="flex space-x-4">
+          <a href="#" class="text-white hover:text-secondary transition-colors duration-300">
+            <i class="fa fa-facebook"></i>
+          </a>
+          <a href="#" class="text-white hover:text-secondary transition-colors duration-300">
+            <i class="fa fa-twitter"></i>
+          </a>
+          <a href="#" class="text-white hover:text-secondary transition-colors duration-300">
+            <i class="fa fa-instagram"></i>
+          </a>
+          <a href="#" class="text-white hover:text-secondary transition-colors duration-300">
+            <i class="fa fa-youtube-play"></i>
+          </a>
+        </div>
+      </div>
+      <div class="mt-4 text-center text-sm text-white/70">
+        <p>本網站僅供休閒娛樂使用，非宗教機構或組織.</p>
+      </div>
+    </div>
+  </footer>
+
+    <!-- 登入彈出視窗 -->
+  <div id="loginModal" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center hidden backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 relative transform transition-all duration-300 scale-95 opacity-0" id="loginModalContent">
+      <button id="closeLoginModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+        <i class="fa fa-times text-xl"></i>
+      </button>
+      <h2 class="text-primary font-kai text-2xl mb-6 text-center">使用者登入</h2>
+      <form id="loginForm">
+        <div class="space-y-4">
+          <button type="button" class="w-full bg-[#4285F4] hover:bg-[#4285F4]/90 text-white py-3 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105">
+            <i class="fa fa-google mr-2"></i> 使用 Google 帳號登入
+          </button>
+          <div class="flex items-center">
+            <div class="flex-grow h-px bg-gray-300"></div>
+            <span class="px-3 text-gray-500">或</span>
+            <div class="flex-grow h-px bg-gray-300"></div>
+          </div>
+          <div>
+            <label for="email" class="block text-gray-700 mb-1">Email</label>
+            <input type="email" id="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300" placeholder="請輸入您的 Email">
+          </div>
+          <div>
+            <label for="password" class="block text-gray-700 mb-1">密碼</label>
+            <input type="password" id="password" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300" placeholder="請輸入您的密碼">
+          </div>
+          <button id="emailLoginBtn" type="submit" class="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-lg transition-all duration-300 transform hover:scale-105">
+            使用 Email 登入
+          </button>
+          <p class="text-center text-gray-600">
+            還沒有帳號？<a href="#" class="text-primary hover:underline">立即註冊</a>
+          </p>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADDED: 皮膚商店彈出視窗 -->
+  <div id="skinsModal" class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center hidden backdrop-blur-sm p-4">
+    <div id="skinsModalContent" class="bg-neutral/95 rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative transform transition-all duration-300 scale-95 opacity-0 max-h-[80vh] flex flex-col">
+      <button id="closeSkinsModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
+        <i class="fa fa-times text-xl"></i>
+      </button>
+      <h2 class="text-primary font-kai text-2xl mb-4 text-center">木魚皮膚商店</h2>
+      <div id="skinsShopContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-y-auto p-2">
+        <!-- 皮膚商品會由 JS 動態載入 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ADDED: 音色商店彈出視窗 -->
+  <div id="soundsModal" class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center hidden backdrop-blur-sm p-4">
+    <div id="soundsModalContent" class="bg-neutral/95 rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative transform transition-all duration-300 scale-95 opacity-0 max-h-[80vh] flex flex-col">
+      <button id="closeSoundsModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
+        <i class="fa fa-times text-xl"></i>
+      </button>
+      <h2 class="text-primary font-kai text-2xl mb-4 text-center">木魚音色商店</h2>
+      <div id="soundsShopContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-y-auto p-2">
+        <!-- 音色商品會由 JS 動態載入 -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ADDED: 提示文字商店彈出視窗 -->
+  <div id="messagesModal" class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center hidden backdrop-blur-sm p-4">
+      <div id="messagesModalContent" class="bg-neutral/95 rounded-2xl shadow-2xl w-full max-w-2xl p-6 relative transform transition-all duration-300 scale-95 opacity-0 max-h-[80vh] flex flex-col">
+          <button id="closeMessagesModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 z-10">
+              <i class="fa fa-times text-xl"></i>
+          </button>
+          <h2 class="text-primary font-kai text-2xl mb-4 text-center">提示文字商店</h2>
+          <div id="messagesShopContainer" class="grid grid-cols-2 md:grid-cols-4 gap-4 overflow-y-auto p-2">
+              <!-- 提示文字商品會由 JS 動態載入 -->
+          </div>
+      </div>
+  </div>
+
+  <!-- NEW: 祈福對象輸入彈出視窗 -->
+  <div id="prayForModal" class="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center hidden backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative transform transition-all duration-300 scale-95 opacity-0" id="prayForModalContent">
+      <button id="closePrayForModal" class="absolute top-4 right-4 text-gray-500 hover:text-gray-700">
+        <i class="fa fa-times text-xl"></i>
+      </button>
+      <h2 class="text-primary font-kai text-xl mb-4 text-center font-bold">為他人祈福</h2>
+      <p class="text-center text-gray-600 mb-4">請寫下您想為之祈福的對象名稱：</p>
+      <div>
+        <input type="text" id="prayForNameInput" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-300" placeholder="例如：家人、朋友、小明">
+      </div>
+      <div class="mt-6 flex justify-center">
+        <button id="confirmPrayForBtn" class="bg-primary hover:bg-primary/90 text-white px-8 py-2 rounded-lg transition-all duration-300">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 確認操作彈出視窗 -->
+  <div id="confirmModal" class="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center hidden backdrop-blur-sm p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative transform transition-all duration-300 scale-95 opacity-0" id="confirmModalContent">
+      <h2 id="confirmModalTitle" class="text-primary font-kai text-xl mb-4 text-center font-bold"></h2>
+      <p id="confirmModalText" class="text-center text-gray-600 mb-6"></p>
+      <div class="flex justify-center space-x-4">
+        <button id="confirmModalCancelBtn" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg transition-all duration-300">取消</button>
+        <button id="confirmModalOkBtn" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-all duration-300">確定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 木魚點擊音效 -->
+  <audio id="woodSound" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/ysell_sound_2014081422463196991_66366.mp3"></audio>
+  <audio id="woodSound2" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/773558967.618661.mp3"></audio>
+  <audio id="woodSound3" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/773558967.679482.mp3"></audio>
+  <audio id="woodSound4" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/773569690.680731.mp3"></audio>
+  <audio id="woodSound5" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/773570329.729218.mp3"></audio>
+  <audio id="woodSound6" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/773570897.496841.mp3"></audio>
+  <audio id="woodSound7" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/773570506.387991.mp3"></audio>
+  <audio id="woodSound8" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/773570095.581433.mp3"></audio>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const woodenFishData = {
+          user: {
+            loggedIn: false,
+            username: '訪客',
+            totalMerits: 0,
+            availableMerits: 0,
+            unlockedSkins: [0], 
+            unlockedSounds: [0],
+            unlockedMessages: [0],
+            currentSkin: 0,
+            currentSound: 0,
+            currentMessage: 0,
+            consecutiveDays: 0,
+            lastTapDate: null,
+            practiceMode: 'self',
+            prayForName: '',
+            tasks: [
+              { id: 2, name: "初入門道", description: "敲擊木魚50次", completed: false, reward: 100 },
+              { id: 3, name: "修行有成", description: "敲擊木魚500次", completed: false, reward: 500 },
+              { id: 4, name: "功德圓滿", description: "敲擊木魚5000次", completed: false, reward: 2500 },
+              { id: 5, name: "初級修行者", description: "累積1000功德", completed: false, reward: 100 },
+              { id: 6, name: "中級修行者", description: "累積8000功德", completed: false, reward: 800 },
+              { id: 7, name: "高級修行者", description: "累積20000功德", completed: false, reward: 2000 },
+            ],
+            taps: 0,
+          },
+          
+          skins: [
+            { id: 0, name: "原木魚", price: 0, unlocked: true, image: "https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3235859.jpg" },
+            { id: 1, name: "翡翠木魚", price: 2000, unlocked: false, image: "https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3244040.jpg" },
+            { id: 2, name: "青銅器木魚", price: 5000, unlocked: false, image: "https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3244041.jpg" },
+            { id: 3, name: "土豪金木魚", price: 12000, unlocked: false, image: "https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3244042.jpg" },
+            { id: 4, name: "雲紋黑曜木魚", price: 30000, unlocked: false, image: "https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3244043.jpg" },
+            { id: 5, name: "冰晶白玉木魚", price: 75000, unlocked: false, image: "https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3244044.jpg" },
+            { id: 6, name: "紫檀原木木魚", price: 150000, unlocked: false, image: "https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3244045.jpg" },
+            { id: 7, name: "未來金屬木魚", price: 500000, unlocked: false, image: "https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/images/S__3244046.jpg" },
+          ],
+          
+          sounds: [
+            { id: 0, name: "經典木質聲", price: 0, unlocked: true, file: "woodSound" },
+            { id: 1, name: "深沉梵音", price: 1500, unlocked: false, file: "woodSound2" },
+            { id: 2, name: "清脆銅聲", price: 4000, unlocked: false, file: "woodSound3" },
+            { id: 3, name: "空靈沉靜", price: 10000, unlocked: false, file: "woodSound4" },
+            { id: 4, name: "脈輪頻率", price: 25000, unlocked: false, file: "woodSound5" },
+            { id: 5, name: "空谷鐘響", price: 60000, unlocked: false, file: "woodSound6" },
+            { id: 6, name: "太鼓回響", price: 120000, unlocked: false, file: "woodSound7" },
+            { id: 7, name: "合成冥想音", price: 250000, unlocked: false, file: "woodSound8" },
+          ],
+          
+          messages: [
+            { id: 0, text: "功德 +1", price: 0, unlocked: true },
+            { id: 1, text: "智慧 +1", price: 1000, unlocked: false },
+            { id: 2, text: "福報 +1", price: 3000, unlocked: false },
+            { id: 3, text: "美貌 +1", price: 8000, unlocked: false },
+            { id: 4, text: "財富 +1", price: 20000, unlocked: false },
+            { id: 5, text: "健康 +1", price: 50000, unlocked: false },
+            { id: 6, text: "貴人 +1", price: 100000, unlocked: false },
+            { id: 7, text: "忍耐 +1", price: 200000, unlocked: false },
+          ],
+          
+          achievements: [
+            { id: 1, name: "初試啼聲", description: "首次敲擊木魚", icon: "fa-hand-pointer-o", completed: false },
+            { id: 2, name: "小有所成", description: "累積1000功德", icon: "fa-star-o", completed: false },
+            { id: 3, name: "修行者", description: "累積10000功德", icon: "fa-star-half-o", completed: false },
+            { id: 4, name: "大師", description: "累積50000功德", icon: "fa-star", completed: false },
+            { id: 5, name: "收藏家", description: "解鎖所有木魚皮膚", icon: "fa-paint-brush", completed: false },
+            { id: 6, name: "音樂家", description: "解鎖所有木魚音色", icon: "fa-music", completed: false },
+            { id: 7, name: "語言大師", description: "解鎖所有提示文字", icon: "fa-commenting-o", completed: false },
+            { id: 8, name: "持之以恆", description: "連續敲擊木魚30天", icon: "fa-calendar-check-o", completed: false },
+          ],
+          
+          leaderboard: [
+            { rank: 1, name: "達摩祖師", merits: 99999, avatar: "https://picsum.photos/id/1001/100/100" },
+            { rank: 2, name: "釋迦牟尼", merits: 88888, avatar: "https://picsum.photos/id/1002/100/100" },
+            { rank: 3, name: "觀世音菩薩", merits: 77777, avatar: "https://picsum.photos/id/1003/100/100" },
+            { rank: 4, name: "彌勒佛", merits: 66666, avatar: "https://picsum.photos/id/1004/100/100" },
+            { rank: 5, name: "韋馱菩薩", merits: 55555, avatar: "https://picsum.photos/id/1005/100/100" },
+          ],
+          
+          soundElements: {
+            woodSound: document.getElementById('woodSound'),
+            woodSound2: document.getElementById('woodSound2'),
+            woodSound3: document.getElementById('woodSound3'),
+            woodSound4: document.getElementById('woodSound4'),
+            woodSound5: document.getElementById('woodSound5'),
+            woodSound6: document.getElementById('woodSound6'),
+            woodSound7: document.getElementById('woodSound7'),
+            woodSound8: document.getElementById('woodSound8'),
+          }
+        };
+
+        // DOM 元素
+        const elements = {
+          woodenFish: document.getElementById('woodenFish'),
+          woodenFishContainer: document.getElementById('woodenFishContainer'),
+          fishEffect: document.getElementById('fishEffect'),
+          tapMessage: document.getElementById('tapMessage'),
+          totalMerits: document.getElementById('totalMerits'),
+          availableMerits: document.getElementById('availableMerits'),
+          skinsContainer: document.getElementById('skinsContainer'),
+          soundsContainer: document.getElementById('soundsContainer'),
+          achievementsContainer: document.getElementById('achievementsContainer'),
+          tasksContainer: document.getElementById('tasksContainer'),
+          leaderboardContainer: document.getElementById('leaderboardContainer'),
+          loginBtn: document.getElementById('loginBtn'),
+          userInfo: document.getElementById('userInfo'),
+          usernameDisplay: document.getElementById('usernameDisplay'),
+          logoutBtn: document.getElementById('logoutBtn'),
+          mobileLoginBtn: document.getElementById('mobileLoginBtn'),
+          mobileUserInfo: document.getElementById('mobileUserInfo'),
+          mobileUsernameDisplay: document.getElementById('mobileUsernameDisplay'),
+          mobileLogoutBtn: document.getElementById('mobileLogoutBtn'),
+          menuBtn: document.getElementById('menuBtn'),
+          mobileMenu: document.getElementById('mobileMenu'),
+          loginModal: document.getElementById('loginModal'),
+          loginModalContent: document.getElementById('loginModalContent'),
+          closeLoginModal: document.getElementById('closeLoginModal'),
+          emailLoginBtn: document.getElementById('emailLoginBtn'),
+          emailInput: document.getElementById('email'),
+          skinsModal: document.getElementById('skinsModal'),
+          skinsModalContent: document.getElementById('skinsModalContent'),
+          closeSkinsModal: document.getElementById('closeSkinsModal'),
+          soundsModal: document.getElementById('soundsModal'),
+          soundsModalContent: document.getElementById('soundsModalContent'),
+          closeSoundsModal: document.getElementById('closeSoundsModal'),
+          messagesModal: document.getElementById('messagesModal'),
+          messagesModalContent: document.getElementById('messagesModalContent'),
+          closeMessagesModal: document.getElementById('closeMessagesModal'),
+          skinsShopContainer: document.getElementById('skinsShopContainer'),
+          soundsShopContainer: document.getElementById('soundsShopContainer'),
+          messagesShopContainer: document.getElementById('messagesShopContainer'),
+          resetDataBtn: document.getElementById('resetDataBtn'),
+          confirmModal: document.getElementById('confirmModal'),
+          confirmModalContent: document.getElementById('confirmModalContent'),
+          confirmModalTitle: document.getElementById('confirmModalTitle'),
+          confirmModalText: document.getElementById('confirmModalText'),
+          confirmModalCancelBtn: document.getElementById('confirmModalCancelBtn'),
+          confirmModalOkBtn: document.getElementById('confirmModalOkBtn'),
+          selfPracticeBtn: document.getElementById('selfPracticeBtn'),
+          otherPracticeBtn: document.getElementById('otherPracticeBtn'),
+          prayForModal: document.getElementById('prayForModal'),
+          prayForModalContent: document.getElementById('prayForModalContent'),
+          closePrayForModal: document.getElementById('closePrayForModal'),
+          prayForNameInput: document.getElementById('prayForNameInput'),
+          confirmPrayForBtn: document.getElementById('confirmPrayForBtn'),
+        };
+
+        let onConfirmCallback = null;
+
+        function initWoodenFish() {
+          loadUserData();
+          updateAllUI();
+          addEventListeners();
+        }
+        
+        function updateAllUI() {
+            updateLoginStatusUI();
+            updateWoodenFishDisplay();
+            updateMeritsDisplay();
+            loadSkins();
+            loadSounds();
+            loadAchievements();
+            loadTasks();
+            loadLeaderboard();
+            updateModeButtonsUI();
+        }
+
+        function addEventListeners() {
+            elements.woodenFishContainer.addEventListener('click', tapWoodenFish);
+            elements.menuBtn.addEventListener('click', toggleMobileMenu);
+            elements.loginBtn.addEventListener('click', openLoginModal);
+            elements.mobileLoginBtn.addEventListener('click', openLoginModal);
+            elements.logoutBtn.addEventListener('click', handleLogout);
+            elements.mobileLogoutBtn.addEventListener('click', handleLogout);
+            elements.emailLoginBtn.addEventListener('click', handleLogin);
+            elements.closeLoginModal.addEventListener('click', closeLoginModal);
+            elements.closeSkinsModal.addEventListener('click', closeSkinsModal);
+            elements.closeSoundsModal.addEventListener('click', closeSoundsModal);
+            elements.closeMessagesModal.addEventListener('click', closeMessagesModal);
+            window.addEventListener('scroll', handleScroll);
+            elements.resetDataBtn.addEventListener('click', handleResetData);
+            elements.confirmModalCancelBtn.addEventListener('click', closeConfirmModal);
+            elements.confirmModalOkBtn.addEventListener('click', () => {
+                if (typeof onConfirmCallback === 'function') {
+                    onConfirmCallback();
+                }
+                closeConfirmModal();
+            });
+            elements.selfPracticeBtn.addEventListener('click', setPracticeMode);
+            elements.otherPracticeBtn.addEventListener('click', setPracticeMode);
+            elements.closePrayForModal.addEventListener('click', closePrayForModal);
+            elements.confirmPrayForBtn.addEventListener('click', handleConfirmPrayFor);
+        }
+
+        function loadUserData() {
+          const savedData = localStorage.getItem('woodenFishData');
+          if (savedData) {
+            try {
+              const parsedData = JSON.parse(savedData);
+              woodenFishData.user = { ...woodenFishData.user, ...parsedData.user };
+              
+              if (parsedData.user && parsedData.user.tasks) {
+                 const savedTasks = parsedData.user.tasks;
+                 woodenFishData.user.tasks.forEach(defaultTask => {
+                     const savedTask = savedTasks.find(st => st.id === defaultTask.id);
+                     if (savedTask) {
+                         defaultTask.completed = savedTask.completed;
+                     }
+                 });
+              }
+
+              if (parsedData.achievements) {
+                  woodenFishData.achievements.forEach(ach => {
+                      const savedAch = parsedData.achievements.find(sa => sa.id === ach.id);
+                      if (savedAch) {
+                          ach.completed = savedAch.completed;
+                      }
+                  });
+              }
+
+              woodenFishData.skins.forEach(skin => {
+                skin.unlocked = woodenFishData.user.unlockedSkins.includes(skin.id);
+              });
+              
+              woodenFishData.sounds.forEach(sound => {
+                sound.unlocked = woodenFishData.user.unlockedSounds.includes(sound.id);
+              });
+              
+              woodenFishData.messages.forEach(message => {
+                message.unlocked = woodenFishData.user.unlockedMessages.includes(message.id);
+              });
+              
+              checkConsecutiveDays();
+            } catch (e) {
+              console.error('讀取存檔時發生錯誤:', e);
+            }
+          }
+        }
+
+        function saveUserData() {
+            const dataToSave = {
+                user: woodenFishData.user,
+                achievements: woodenFishData.achievements
+            };
+            localStorage.setItem('woodenFishData', JSON.stringify(dataToSave));
+        }
+
+        function checkConsecutiveDays() {
+          const today = new Date().toDateString();
+          const lastTapDate = woodenFishData.user.lastTapDate;
+          
+          if (!lastTapDate) {
+            woodenFishData.user.lastTapDate = today;
+            woodenFishData.user.consecutiveDays = 1;
+            return;
+          }
+          
+          const lastDate = new Date(lastTapDate);
+          const todayDate = new Date(today);
+          const timeDiff = todayDate.getTime() - lastDate.getTime();
+          const dayDiff = Math.floor(timeDiff / (1000 * 3600 * 24));
+          
+          if (dayDiff === 0) {
+            return;
+          } else if (dayDiff === 1) {
+            woodenFishData.user.consecutiveDays++;
+            woodenFishData.user.lastTapDate = today;
+          } else {
+            woodenFishData.user.consecutiveDays = 1;
+            woodenFishData.user.lastTapDate = today;
+          }
+        }
+
+        function updateWoodenFishDisplay() {
+          const currentSkin = woodenFishData.skins.find(s => s.id === woodenFishData.user.currentSkin) || woodenFishData.skins[0];
+          elements.woodenFish.src = currentSkin.image;
+          elements.woodenFish.alt = currentSkin.name;
+        }
+
+        function updateMeritsDisplay() {
+          elements.totalMerits.textContent = Math.floor(woodenFishData.user.totalMerits);
+          elements.availableMerits.textContent = Math.floor(woodenFishData.user.availableMerits);
+        }
+
+        function loadSkins() {
+          elements.skinsContainer.innerHTML = '';
+          
+          const currentSkin = woodenFishData.skins.find(s => s.id === woodenFishData.user.currentSkin) || woodenFishData.skins[0];
+          const currentSkinElement = document.createElement('div');
+          currentSkinElement.className = 'col-span-2 md:col-span-4 mb-4';
+          currentSkinElement.innerHTML = `
+            <div class="bg-primary/10 rounded-xl p-3 flex items-center">
+              <div class="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden mr-4 border-2 border-white shadow-md">
+                <img src="${currentSkin.image}" alt="${currentSkin.name}" class="w-full h-full object-cover">
+              </div>
+              <div class="flex-grow">
+                <h3 class="font-kai text-lg md:text-xl text-primary font-bold">當前皮膚：${currentSkin.name}</h3>
+                <div class="flex items-center mt-1">
+                  <span class="text-sm text-accent/80">點擊更換皮膚</span>
+                  <button id="changeSkinBtn" class="ml-2 bg-primary hover:bg-primary/90 text-white px-3 py-1 rounded-md text-sm transition-all duration-300 transform hover:scale-105">
+                    <i class="fa fa-paint-brush mr-1"></i> 更換
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          elements.skinsContainer.appendChild(currentSkinElement);
+          
+          document.getElementById('changeSkinBtn').addEventListener('click', openSkinsModal);
+          
+          const unlockedSkinsCount = woodenFishData.user.unlockedSkins.length;
+          const totalSkinsCount = woodenFishData.skins.length;
+          
+          const skinsCountElement = document.createElement('div');
+          skinsCountElement.className = 'col-span-2 md:col-span-4 text-center text-accent/70 text-sm mb-2';
+          skinsCountElement.textContent = `已解鎖 ${unlockedSkinsCount}/${totalSkinsCount} 種皮膚`;
+          elements.skinsContainer.appendChild(skinsCountElement);
+        }
+
+        function loadSounds() {
+          elements.soundsContainer.innerHTML = '';
+          
+          const currentSound = woodenFishData.sounds.find(s => s.id === woodenFishData.user.currentSound) || woodenFishData.sounds[0];
+          const currentSoundElement = document.createElement('div');
+          currentSoundElement.className = 'col-span-2 md:col-span-4 mb-4';
+          currentSoundElement.innerHTML = `
+            <div class="bg-primary/10 rounded-xl p-3 flex items-center">
+              <div class="w-12 h-12 md:w-16 md:h-16 rounded-full bg-secondary/20 flex items-center justify-center mr-4 border-2 border-white shadow-md">
+                <i class="fa fa-music text-2xl text-secondary"></i>
+              </div>
+              <div class="flex-grow">
+                <h3 class="font-kai text-lg md:text-xl text-primary font-bold">當前音色：${currentSound.name}</h3>
+                <div class="flex items-center mt-1">
+                  <span class="text-sm text-accent/80">點擊更換音色</span>
+                  <button id="changeSoundBtn" class="ml-2 bg-primary hover:bg-primary/90 text-white px-3 py-1 rounded-md text-sm transition-all duration-300 transform hover:scale-105">
+                    <i class="fa fa-music mr-1"></i> 更換
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+          elements.soundsContainer.appendChild(currentSoundElement);
+          
+          document.getElementById('changeSoundBtn').addEventListener('click', openSoundsModal);
+          
+          const unlockedSoundsCount = woodenFishData.user.unlockedSounds.length;
+          const totalSoundsCount = woodenFishData.sounds.length;
+          
+          const soundsCountElement = document.createElement('div');
+          soundsCountElement.className = 'col-span-2 md:col-span-4 text-center text-accent/70 text-sm mb-2';
+          soundsCountElement.textContent = `已解鎖 ${unlockedSoundsCount}/${totalSoundsCount} 種音色`;
+          elements.soundsContainer.appendChild(soundsCountElement);
+        }
+
+        function loadAchievements() {
+          elements.achievementsContainer.innerHTML = '';
+          
+          const completedAchievements = woodenFishData.achievements.filter(a => a.completed);
+          const incompleteAchievements = woodenFishData.achievements.filter(a => !a.completed);
+          
+          if (completedAchievements.length > 0) {
+            const titleElement = document.createElement('div');
+            titleElement.className = 'col-span-1 font-kai text-accent font-bold';
+            titleElement.innerHTML = '<i class="fa fa-check-circle text-secondary mr-1"></i> 已完成成就';
+            elements.achievementsContainer.appendChild(titleElement);
+            
+            completedAchievements.forEach(achievement => {
+              const achievementElement = document.createElement('div');
+              achievementElement.className = 'flex items-center p-2 bg-green-50 rounded-lg border border-green-100';
+              achievementElement.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center mr-3">
+                  <i class="fa ${achievement.icon} text-green-600"></i>
+                </div>
+                <div class="flex-grow">
+                  <h4 class="font-kai text-green-700">${achievement.name}</h4>
+                  <p class="text-xs text-green-600/80">${achievement.description}</p>
+                </div>
+                <div class="text-green-500">
+                  <i class="fa fa-trophy"></i>
+                </div>
+              `;
+              elements.achievementsContainer.appendChild(achievementElement);
+            });
+          }
+          
+          if (incompleteAchievements.length > 0) {
+            const titleElement = document.createElement('div');
+            titleElement.className = 'col-span-1 font-kai text-accent font-bold mt-3';
+            titleElement.innerHTML = '<i class="fa fa-circle-o text-secondary mr-1"></i> 未完成成就';
+            elements.achievementsContainer.appendChild(titleElement);
+            
+            incompleteAchievements.forEach(achievement => {
+              const achievementElement = document.createElement('div');
+              achievementElement.className = 'flex items-center p-2 bg-gray-50 rounded-lg border border-gray-100';
+              achievementElement.innerHTML = `
+                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center mr-3">
+                  <i class="fa ${achievement.icon} text-gray-400"></i>
+                </div>
+                <div class="flex-grow">
+                  <h4 class="font-kai text-gray-600">${achievement.name}</h4>
+                  <p class="text-xs text-gray-500">${achievement.description}</p>
+                </div>
+                <div class="text-gray-300">
+                  <i class="fa fa-trophy"></i>
+                </div>
+              `;
+              elements.achievementsContainer.appendChild(achievementElement);
+            });
+          }
+        }
+
+        function loadTasks() {
+          elements.tasksContainer.innerHTML = '';
+          
+          const completedTasks = woodenFishData.user.tasks.filter(t => t.completed);
+          const incompleteTasks = woodenFishData.user.tasks.filter(t => !t.completed);
+          
+          if (incompleteTasks.length > 0) {
+            const titleElement = document.createElement('div');
+            titleElement.className = 'col-span-1 font-kai text-accent font-bold';
+            titleElement.innerHTML = '<i class="fa fa-list-ul text-secondary mr-1"></i> 進行中任務';
+            elements.tasksContainer.appendChild(titleElement);
+            
+            incompleteTasks.forEach(task => {
+              let progress = 0;
+              
+              if (task.description.includes('敲擊')) {
+                const target = parseInt(task.description.match(/\d+/)[0]);
+                progress = Math.min(woodenFishData.user.taps / target * 100, 100);
+              } else if (task.description.includes('累積')) {
+                const target = parseInt(task.description.match(/\d+/)[0]);
+                progress = Math.min(woodenFishData.user.totalMerits / target * 100, 100);
+              } else if (task.description.includes('連續')) {
+                const target = parseInt(task.description.match(/\d+/)[0]);
+                progress = Math.min(woodenFishData.user.consecutiveDays / target * 100, 100);
+              }
+              
+              const taskElement = document.createElement('div');
+              taskElement.className = 'p-2 bg-white rounded-lg border border-gray-200 mb-2';
+              taskElement.innerHTML = `
+                <div class="flex justify-between items-center mb-1">
+                  <h4 class="font-kai text-primary">${task.name}</h4>
+                  <span class="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                    ${Math.round(progress)}%
+                  </span>
+                </div>
+                <p class="text-xs text-gray-600 mb-1.5">${task.description}</p>
+                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                  <div class="bg-primary h-1.5 rounded-full" style="width: ${progress}%"></div>
+                </div>
+                <div class="flex justify-between items-center mt-1.5">
+                  <span class="text-xs text-gray-500">
+                    獎勵: ${task.reward.toLocaleString()} 功德
+                  </span>
+                </div>
+              `;
+              elements.tasksContainer.appendChild(taskElement);
+            });
+          }
+          
+          if (completedTasks.length > 0) {
+            const titleElement = document.createElement('div');
+            titleElement.className = 'col-span-1 font-kai text-accent font-bold mt-3';
+            titleElement.innerHTML = '<i class="fa fa-check-square-o text-secondary mr-1"></i> 已完成任務';
+            elements.tasksContainer.appendChild(titleElement);
+            
+            completedTasks.forEach(task => {
+              const taskElement = document.createElement('div');
+              taskElement.className = 'p-2 bg-green-50 rounded-lg border border-green-100 mb-2';
+              taskElement.innerHTML = `
+                <div class="flex justify-between items-center mb-1">
+                  <h4 class="font-kai text-green-700">${task.name}</h4>
+                  <span class="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                    已完成
+                  </span>
+                </div>
+                <p class="text-xs text-green-600 mb-1.5">${task.description}</p>
+                <div class="flex justify-between items-center mt-1.5">
+                  <span class="text-xs text-green-600">
+                    獎勵: ${task.reward.toLocaleString()} 功德
+                  </span>
+                  <i class="fa fa-check text-green-500"></i>
+                </div>
+              `;
+              elements.tasksContainer.appendChild(taskElement);
+            });
+          }
+        }
+
+        function loadLeaderboard() {
+          elements.leaderboardContainer.innerHTML = '';
+          
+          const titleElement = document.createElement('div');
+          titleElement.className = 'col-span-1 font-kai text-accent font-bold mb-2';
+          titleElement.innerHTML = '<i class="fa fa-star text-secondary mr-1"></i> 修行排行榜';
+          elements.leaderboardContainer.appendChild(titleElement);
+          
+          const userEntry = {
+            name: woodenFishData.user.username,
+            merits: Math.floor(woodenFishData.user.totalMerits),
+            avatar: "https://picsum.photos/id/1012/100/100",
+            isPlayer: true
+          };
+          let dynamicLeaderboard = [...woodenFishData.leaderboard, userEntry];
+
+          dynamicLeaderboard.sort((a, b) => b.merits - a.merits);
+
+          dynamicLeaderboard.forEach((user, index) => {
+            const rank = index + 1;
+            
+            let rankClass = '';
+            let rankIcon = '';
+            const isPlayerHighlight = user.isPlayer ? 'bg-primary/10 border border-primary/20' : 'bg-white';
+
+            if (rank === 1) {
+              rankClass = 'bg-yellow-100 text-yellow-600';
+              rankIcon = '<i class="fa fa-trophy text-yellow-500"></i>';
+            } else if (rank === 2) {
+              rankClass = 'bg-gray-100 text-gray-600';
+              rankIcon = '<i class="fa fa-trophy text-gray-400"></i>';
+            } else if (rank === 3) {
+              rankClass = 'bg-orange-100 text-orange-600';
+              rankIcon = '<i class="fa fa-trophy text-orange-400"></i>';
+            } else {
+              rankClass = 'bg-gray-50 text-gray-600';
+            }
+            
+            const userElement = document.createElement('div');
+            userElement.className = `flex items-center p-2 rounded-lg mb-2 ${isPlayerHighlight}`;
+            userElement.innerHTML = `
+              <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3 font-bold ${rankClass}">
+                ${rankIcon || rank}
+              </div>
+              <div class="w-8 h-8 rounded-full overflow-hidden mr-2">
+                <img src="${user.avatar}" alt="${user.name}" class="w-full h-full object-cover">
+              </div>
+              <div class="flex-grow">
+                <h4 class="font-kai ${user.isPlayer ? 'text-primary font-bold' : 'text-gray-700'}">${user.name}</h4>
+                <p class="text-xs ${user.isPlayer ? 'text-primary/70' : 'text-gray-500'}">功德: ${user.merits.toLocaleString()}</p>
+              </div>
+            `;
+            elements.leaderboardContainer.appendChild(userElement);
+          });
+        }
+
+        function tapWoodenFish() {
+          if (elements.woodenFishContainer.classList.contains('is-tapping')) return;
+          elements.woodenFishContainer.classList.add('is-tapping');
+
+          woodenFishData.user.taps++;
+          checkConsecutiveDays();
+
+          let meritsToAdd = 1;
+          let eventMessages = [];
+
+          const taskResult = checkCompletedTasks();
+          meritsToAdd += taskResult.merits;
+          eventMessages = eventMessages.concat(taskResult.messages);
+          
+          const achievementResult = checkCompletedAchievements();
+          eventMessages = eventMessages.concat(achievementResult.messages);
+
+          if (meritsToAdd > 0) {
+            addMerits(meritsToAdd);
+          }
+
+          playCurrentSound();
+          showTapEffect();
+          
+          let baseMessage = "";
+          if (eventMessages.length > 0) {
+              baseMessage = eventMessages[0];
+          } else {
+              const unlockedMessages = woodenFishData.messages.filter(m => m.unlocked);
+              if (unlockedMessages.length > 0) {
+                  const randomIndex = Math.floor(Math.random() * unlockedMessages.length);
+                  baseMessage = unlockedMessages[randomIndex].text;
+              }
+          }
+
+          let finalMessage = baseMessage;
+          if (woodenFishData.user.practiceMode === 'other' && woodenFishData.user.prayForName) {
+              if (baseMessage.includes('+1')) {
+                  finalMessage = `${woodenFishData.user.prayForName} ${baseMessage}`;
+              }
+          }
+          showTapMessage(finalMessage);
+          
+          loadLeaderboard();
+          saveUserData();
+
+          setTimeout(() => {
+            elements.woodenFishContainer.classList.remove('is-tapping');
+          }, 300);
+        }
+
+        function addMerits(amount) {
+          woodenFishData.user.totalMerits += amount;
+          woodenFishData.user.availableMerits += amount;
+          updateMeritsDisplay();
+        }
+
+        // 修正：修改音效播放方式以提高相容性
+        function playCurrentSound() {
+            const currentSoundInfo = woodenFishData.sounds.find(s => s.id === woodenFishData.user.currentSound) || woodenFishData.sounds[0];
+            const soundElement = woodenFishData.soundElements[currentSoundInfo.file];
+            
+            if (soundElement && soundElement.src) {
+                // 每次點擊都建立一個新的 Audio 物件來播放。
+                // 這在不同瀏覽器和重複點擊時更為可靠。
+                const audio = new Audio(soundElement.src);
+                audio.play().catch(e => console.error('播放音效時發生錯誤:', e));
+            } else {
+                console.error(`找不到音效元素或來源: ${currentSoundInfo.file}`);
+            }
+        }
+
+        function showTapEffect() {
+          elements.woodenFishContainer.classList.add('animate-tap');
+          elements.fishEffect.style.opacity = '0.7';
+          
+          setTimeout(() => {
+            elements.woodenFishContainer.classList.remove('animate-tap');
+            elements.fishEffect.style.opacity = '0';
+          }, 200);
+        }
+
+        function showTapMessage(message) {
+          const el = elements.tapMessage;
+          el.textContent = message;
+          el.classList.remove('animate-fade-up');
+          void el.offsetWidth;
+          el.classList.add('animate-fade-up');
+        }
+
+        function checkCompletedTasks() {
+          let meritsFromTasks = 0;
+          let taskMessages = [];
+          let needsUiUpdate = false;
+
+          woodenFishData.user.tasks.forEach(task => {
+            if (task.completed) return;
+            
+            let isCompleted = false;
+            if (task.description.includes('敲擊')) {
+              const target = parseInt(task.description.match(/\d+/)[0]);
+              isCompleted = woodenFishData.user.taps >= target;
+            } else if (task.description.includes('累積')) {
+              const target = parseInt(task.description.match(/\d+/)[0]);
+              isCompleted = woodenFishData.user.totalMerits >= target;
+            } else if (task.description.includes('連續')) {
+              const target = parseInt(task.description.match(/\d+/)[0]);
+              isCompleted = woodenFishData.user.consecutiveDays >= target;
+            }
+            
+            if (isCompleted) {
+              task.completed = true;
+              needsUiUpdate = true;
+              if (typeof task.reward === 'number') {
+                meritsFromTasks += task.reward;
+                taskMessages.push(`完成任務「${task.name}」，獲得 ${task.reward.toLocaleString()} 功德！`);
+              }
+            }
+          });
+
+          if (needsUiUpdate) {
+            loadTasks();
+          }
+
+          return { merits: meritsFromTasks, messages: taskMessages };
+        }
+
+        function checkCompletedAchievements() {
+          let achievementMessages = [];
+          let needsUiUpdate = false;
+
+          woodenFishData.achievements.forEach(ach => {
+            if (ach.completed) return;
+
+            let isCompleted = false;
+            switch (ach.id) {
+              case 1: isCompleted = woodenFishData.user.taps >= 1; break;
+              case 2: isCompleted = woodenFishData.user.totalMerits >= 1000; break;
+              case 3: isCompleted = woodenFishData.user.totalMerits >= 10000; break;
+              case 4: isCompleted = woodenFishData.user.totalMerits >= 50000; break;
+              case 5: isCompleted = woodenFishData.user.unlockedSkins.length === woodenFishData.skins.length; break;
+              case 6: isCompleted = woodenFishData.user.unlockedSounds.length === woodenFishData.sounds.length; break;
+              case 7: isCompleted = woodenFishData.user.unlockedMessages.length === woodenFishData.messages.length; break;
+              case 8: isCompleted = woodenFishData.user.consecutiveDays >= 30; break;
+            }
+
+            if (isCompleted) {
+              ach.completed = true;
+              achievementMessages.push(`達成成就：「${ach.name}」！`);
+              needsUiUpdate = true;
+            }
+          });
+
+          if (needsUiUpdate) {
+            loadAchievements();
+          }
+          
+          return { messages: achievementMessages };
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const email = elements.emailInput.value;
+            if (!email) {
+                showTapMessage("請輸入Email");
+                return;
+            }
+            const username = email.split('@')[0];
+            woodenFishData.user.loggedIn = true;
+            woodenFishData.user.username = username;
+
+            updateLoginStatusUI();
+            closeLoginModal();
+            showTapMessage(`歡迎回來, ${username}`);
+            loadLeaderboard();
+        }
+
+        function handleLogout() {
+            showTapMessage(`${woodenFishData.user.username} 已登出`);
+            woodenFishData.user.loggedIn = false;
+            woodenFishData.user.username = '訪客';
+            updateLoginStatusUI();
+            loadLeaderboard();
+        }
+
+        function updateLoginStatusUI() {
+            const loggedIn = woodenFishData.user.loggedIn;
+            const username = woodenFishData.user.username;
+
+            elements.loginBtn.classList.toggle('hidden', loggedIn);
+            elements.userInfo.classList.toggle('hidden', !loggedIn);
+            elements.userInfo.classList.toggle('flex', loggedIn);
+            elements.usernameDisplay.textContent = username;
+
+            elements.mobileLoginBtn.classList.toggle('hidden', loggedIn);
+            elements.mobileUserInfo.classList.toggle('hidden', !loggedIn);
+            elements.mobileUserInfo.classList.toggle('flex', loggedIn);
+            elements.mobileUsernameDisplay.textContent = username;
+        }
+
+        function openLoginModal() {
+          elements.loginModal.classList.remove('hidden');
+          setTimeout(() => {
+            elements.loginModalContent.classList.remove('scale-95', 'opacity-0');
+            elements.loginModalContent.classList.add('scale-100', 'opacity-100');
+          }, 10);
+        }
+
+        function closeLoginModal() {
+          elements.loginModalContent.classList.remove('scale-100', 'opacity-100');
+          elements.loginModalContent.classList.add('scale-95', 'opacity-0');
+          setTimeout(() => {
+            elements.loginModal.classList.add('hidden');
+          }, 300);
+        }
+
+        function openSkinsModal() {
+          loadSkinsShop();
+          elements.skinsModal.classList.remove('hidden');
+          setTimeout(() => {
+            elements.skinsModalContent.classList.remove('scale-95', 'opacity-0');
+            elements.skinsModalContent.classList.add('scale-100', 'opacity-100');
+          }, 10);
+        }
+
+        function closeSkinsModal() {
+          elements.skinsModalContent.classList.remove('scale-100', 'opacity-100');
+          elements.skinsModalContent.classList.add('scale-95', 'opacity-0');
+          setTimeout(() => {
+            elements.skinsModal.classList.add('hidden');
+          }, 300);
+        }
+
+        function loadSkinsShop() {
+          elements.skinsShopContainer.innerHTML = '';
+          
+          woodenFishData.skins.forEach(skin => {
+            const skinElement = document.createElement('div');
+            const isUnlocked = woodenFishData.user.unlockedSkins.includes(skin.id);
+            
+            if (isUnlocked) {
+              const isActive = skin.id === woodenFishData.user.currentSkin;
+              skinElement.className = `relative ${isActive ? 'ring-2 ring-primary' : ''} rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg`;
+              skinElement.innerHTML = `
+                <div class="h-32 overflow-hidden">
+                  <img src="${skin.image}" alt="${skin.name}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                </div>
+                <div class="p-2 bg-white">
+                  <h3 class="font-kai text-primary font-bold text-sm truncate">${skin.name}</h3>
+                  <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs ${isActive ? 'text-primary' : 'text-gray-500'}">
+                      ${isActive ? '當前使用' : '已解鎖'}
+                    </span>
+                    ${isActive ? '' : `<button onclick="selectSkin(${skin.id})" class="text-xs bg-primary hover:bg-primary/90 text-white px-2 py-1 rounded transition-colors duration-200">
+                      使用
+                    </button>`}
+                  </div>
+                </div>
+                ${isActive ? '<div class="absolute top-1 right-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full shadow-md">✓</div>' : ''}
+              `;
+            } else {
+              skinElement.className = 'relative rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg';
+              skinElement.innerHTML = `
+                <div class="h-32 overflow-hidden relative">
+                  <img src="${skin.image}" alt="${skin.name}" class="w-full h-full object-cover filter grayscale brightness-75">
+                  <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span class="text-white text-sm font-bold flex items-center"><i class="fa fa-diamond mr-1 text-secondary"></i>${skin.price.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div class="p-2 bg-white">
+                  <h3 class="font-kai text-primary font-bold text-sm truncate">${skin.name}</h3>
+                  <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs text-gray-500">未解鎖</span>
+                    <button onclick="purchaseSkin(${skin.id})" class="text-xs bg-secondary hover:bg-secondary/90 text-primary px-2 py-1 rounded transition-colors duration-200">
+                      購買
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+            elements.skinsShopContainer.appendChild(skinElement);
+          });
+        }
+
+        window.selectSkin = function(skinId) {
+          woodenFishData.user.currentSkin = skinId;
+          updateWoodenFishDisplay();
+          loadSkins();
+          loadSkinsShop();
+          saveUserData();
+        }
+
+        window.purchaseSkin = function(skinId) {
+          const skin = woodenFishData.skins.find(s => s.id === skinId);
+          
+          if (woodenFishData.user.availableMerits >= skin.price) {
+            woodenFishData.user.availableMerits -= skin.price;
+            woodenFishData.user.unlockedSkins.push(skinId);
+            updateMeritsDisplay();
+            loadSkins();
+            loadSkinsShop();
+            checkCompletedAchievements();
+            showTapMessage(`成功解鎖 ${skin.name}!`);
+            saveUserData();
+          } else {
+            showTapMessage(`功德不足，需要 ${skin.price.toLocaleString()} 功德`);
+          }
+        }
+
+        function openSoundsModal() {
+          loadSoundsShop();
+          elements.soundsModal.classList.remove('hidden');
+          setTimeout(() => {
+            elements.soundsModalContent.classList.remove('scale-95', 'opacity-0');
+            elements.soundsModalContent.classList.add('scale-100', 'opacity-100');
+          }, 10);
+        }
+
+        function closeSoundsModal() {
+          elements.soundsModalContent.classList.remove('scale-100', 'opacity-100');
+          elements.soundsModalContent.classList.add('scale-95', 'opacity-0');
+          setTimeout(() => {
+            elements.soundsModal.classList.add('hidden');
+          }, 300);
+        }
+
+        function loadSoundsShop() {
+          elements.soundsShopContainer.innerHTML = '';
+          
+          woodenFishData.sounds.forEach(sound => {
+            const soundElement = document.createElement('div');
+            const isUnlocked = woodenFishData.user.unlockedSounds.includes(sound.id);
+
+            if (isUnlocked) {
+              const isActive = sound.id === woodenFishData.user.currentSound;
+              soundElement.className = `relative ${isActive ? 'ring-2 ring-primary' : ''} rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg`;
+              soundElement.innerHTML = `
+                <div class="h-32 bg-primary/5 flex items-center justify-center">
+                  <i class="fa fa-music text-5xl ${isActive ? 'text-primary animate-pulse' : 'text-gray-400'}"></i>
+                </div>
+                <div class="p-2 bg-white">
+                  <h3 class="font-kai text-primary font-bold text-sm truncate">${sound.name}</h3>
+                  <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs ${isActive ? 'text-primary' : 'text-gray-500'}">
+                      ${isActive ? '當前使用' : '已解鎖'}
+                    </span>
+                    ${isActive ? '' : `<button onclick="selectSound(${sound.id})" class="text-xs bg-primary hover:bg-primary/90 text-white px-2 py-1 rounded transition-colors duration-200">
+                      使用
+                    </button>`}
+                  </div>
+                </div>
+                ${isActive ? '<div class="absolute top-1 right-1 bg-primary text-white text-xs px-1.5 py-0.5 rounded-full shadow-md">✓</div>' : ''}
+              `;
+            } else {
+              soundElement.className = 'relative rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg';
+              soundElement.innerHTML = `
+                <div class="h-32 bg-gray-100 flex items-center justify-center relative">
+                  <i class="fa fa-music text-5xl text-gray-300"></i>
+                  <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                     <span class="text-white text-sm font-bold flex items-center"><i class="fa fa-diamond mr-1 text-secondary"></i>${sound.price.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div class="p-2 bg-white">
+                  <h3 class="font-kai text-primary font-bold text-sm truncate">${sound.name}</h3>
+                  <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs text-gray-500">未解鎖</span>
+                    <button onclick="purchaseSound(${sound.id})" class="text-xs bg-secondary hover:bg-secondary/90 text-primary px-2 py-1 rounded transition-colors duration-200">
+                      購買
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+            elements.soundsShopContainer.appendChild(soundElement);
+          });
+        }
+
+        window.selectSound = function(soundId) {
+          woodenFishData.user.currentSound = soundId;
+          loadSounds();
+          loadSoundsShop();
+          saveUserData();
+        }
+
+        window.purchaseSound = function(soundId) {
+          const sound = woodenFishData.sounds.find(s => s.id === soundId);
+          
+          if (woodenFishData.user.availableMerits >= sound.price) {
+            woodenFishData.user.availableMerits -= sound.price;
+            woodenFishData.user.unlockedSounds.push(soundId);
+            updateMeritsDisplay();
+            loadSounds();
+            loadSoundsShop();
+            checkCompletedAchievements();
+            showTapMessage(`成功解鎖 ${sound.name}!`);
+            saveUserData();
+          } else {
+            showTapMessage(`功德不足，需要 ${sound.price.toLocaleString()} 功德`);
+          }
+        }
+
+        function openMessagesModal() {
+          loadMessagesShop();
+          elements.messagesModal.classList.remove('hidden');
+          setTimeout(() => {
+            elements.messagesModalContent.classList.remove('scale-95', 'opacity-0');
+            elements.messagesModalContent.classList.add('scale-100', 'opacity-100');
+          }, 10);
+        }
+
+        function closeMessagesModal() {
+          elements.messagesModalContent.classList.remove('scale-100', 'opacity-100');
+          elements.messagesModalContent.classList.add('scale-95', 'opacity-0');
+          setTimeout(() => {
+            elements.messagesModal.classList.add('hidden');
+          }, 300);
+        }
+
+        function loadMessagesShop() {
+          elements.messagesShopContainer.innerHTML = '';
+          
+          woodenFishData.messages.forEach(message => {
+            const messageElement = document.createElement('div');
+            const isUnlocked = woodenFishData.user.unlockedMessages.includes(message.id);
+            
+            if (isUnlocked) {
+              messageElement.className = `relative rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg`;
+              messageElement.innerHTML = `
+                <div class="h-32 bg-primary/5 flex items-center justify-center p-2">
+                  <span class="font-kai text-2xl text-center text-gray-600">${message.text}</span>
+                </div>
+                <div class="p-2 bg-white">
+                  <h3 class="font-kai text-primary font-bold text-sm truncate">${message.text}</h3>
+                  <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs text-gray-500">已解鎖</span>
+                  </div>
+                </div>
+              `;
+            } else {
+              messageElement.className = 'relative rounded-xl overflow-hidden group transition-all duration-300 transform hover:scale-105 shadow-lg';
+              messageElement.innerHTML = `
+                <div class="h-32 bg-gray-100 flex items-center justify-center relative p-2">
+                  <span class="font-kai text-2xl text-gray-300">?</span>
+                  <div class="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <span class="text-white text-sm font-bold flex items-center"><i class="fa fa-diamond mr-1 text-secondary"></i>${message.price.toLocaleString()}</span>
+                  </div>
+                </div>
+                <div class="p-2 bg-white">
+                  <h3 class="font-kai text-primary font-bold text-sm truncate">${message.text}</h3>
+                  <div class="flex justify-between items-center mt-1">
+                    <span class="text-xs text-gray-500">未解鎖</span>
+                    <button onclick="purchaseMessage(${message.id})" class="text-xs bg-secondary hover:bg-secondary/90 text-primary px-2 py-1 rounded transition-colors duration-200">
+                      購買
+                    </button>
+                  </div>
+                </div>
+              `;
+            }
+            elements.messagesShopContainer.appendChild(messageElement);
+          });
+        }
+        
+        window.purchaseMessage = function(messageId) {
+          const message = woodenFishData.messages.find(m => m.id === messageId);
+          
+          if (woodenFishData.user.availableMerits >= message.price) {
+            woodenFishData.user.availableMerits -= message.price;
+            woodenFishData.user.unlockedMessages.push(messageId);
+            updateMeritsDisplay();
+            loadMessagesShop();
+            checkCompletedAchievements();
+            showTapMessage(`成功解鎖 ${message.text}!`);
+            saveUserData();
+          } else {
+            showTapMessage(`功德不足，需要 ${message.price.toLocaleString()} 功德`);
+          }
+        }
+
+        function toggleMobileMenu() {
+          elements.mobileMenu.classList.toggle('hidden');
+        }
+
+        function handleScroll() {
+          const nav = document.querySelector('nav');
+          if (window.scrollY > 10) {
+            nav.classList.add('py-2');
+            nav.classList.remove('py-3');
+          } else {
+            nav.classList.add('py-3');
+            nav.classList.remove('py-2');
+          }
+        }
+        
+        function handleResetData() {
+            showConfirmModal(
+                '確定要重置遊戲嗎？',
+                '這個操作無法復原，您所有的功德、已解鎖物品和任務進度都將被永久刪除。',
+                () => {
+                    localStorage.removeItem('woodenFishData');
+                    location.reload();
+                }
+            );
+        }
+
+        function showConfirmModal(title, text, onConfirm) {
+            elements.confirmModalTitle.textContent = title;
+            elements.confirmModalText.textContent = text;
+            onConfirmCallback = onConfirm;
+
+            elements.confirmModal.classList.remove('hidden');
+            setTimeout(() => {
+                elements.confirmModalContent.classList.remove('scale-95', 'opacity-0');
+                elements.confirmModalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeConfirmModal() {
+            elements.confirmModalContent.classList.remove('scale-100', 'opacity-100');
+            elements.confirmModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                elements.confirmModal.classList.add('hidden');
+                onConfirmCallback = null;
+            }, 300);
+        }
+
+        function setPracticeMode(event) {
+            const mode = event.currentTarget.dataset.mode;
+            if (mode === 'self') {
+                woodenFishData.user.practiceMode = 'self';
+                woodenFishData.user.prayForName = '';
+                updateModeButtonsUI();
+                saveUserData();
+            } else if (mode === 'other') {
+                openPrayForModal();
+            }
+        }
+
+        function updateModeButtonsUI() {
+            const currentMode = woodenFishData.user.practiceMode;
+            if (currentMode === 'self') {
+                elements.selfPracticeBtn.classList.add('bg-primary', 'text-white', 'shadow-md');
+                elements.selfPracticeBtn.classList.remove('bg-transparent', 'text-accent');
+                elements.otherPracticeBtn.classList.add('bg-transparent', 'text-accent');
+                elements.otherPracticeBtn.classList.remove('bg-primary', 'text-white', 'shadow-md');
+            } else {
+                elements.otherPracticeBtn.classList.add('bg-primary', 'text-white', 'shadow-md');
+                elements.otherPracticeBtn.classList.remove('bg-transparent', 'text-accent');
+                elements.selfPracticeBtn.classList.add('bg-transparent', 'text-accent');
+                elements.selfPracticeBtn.classList.remove('bg-primary', 'text-white', 'shadow-md');
+            }
+        }
+
+        function openPrayForModal() {
+            elements.prayForNameInput.value = woodenFishData.user.prayForName || '';
+            elements.prayForModal.classList.remove('hidden');
+            setTimeout(() => {
+                elements.prayForModalContent.classList.remove('scale-95', 'opacity-0');
+                elements.prayForModalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closePrayForModal() {
+            elements.prayForModalContent.classList.remove('scale-100', 'opacity-100');
+            elements.prayForModalContent.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                elements.prayForModal.classList.add('hidden');
+            }, 300);
+        }
+
+        function handleConfirmPrayFor() {
+            const name = elements.prayForNameInput.value.trim();
+            if (name) {
+                woodenFishData.user.practiceMode = 'other';
+                woodenFishData.user.prayForName = name;
+                updateModeButtonsUI();
+                saveUserData();
+                closePrayForModal();
+                showTapMessage(`現在開始為 ${name} 祈福`);
+            } else {
+                showTapMessage("請輸入祈福對象的名稱");
+            }
+        }
+
+        // 初始化應用
+        initWoodenFish();
+    });
+  </script>
+</body>
+</html>
+
+        
+  
+           
+      
+         
+          
+            
+         
+         
+          
+          
+            
+           
