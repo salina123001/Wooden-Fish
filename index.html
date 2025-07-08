@@ -6,6 +6,9 @@
   <title>電子木魚修行網</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <!-- 引入 Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script>
     tailwind.config = {
       theme: {
@@ -141,6 +144,10 @@
           </button>
           <div id="userInfo" class="hidden items-center space-x-2">
             <span id="usernameDisplay" class="text-white font-kai"></span>
+            <!-- 新增進入後台按鈕 -->
+            <button id="adminPanelBtn" class="hidden bg-accent hover:bg-accent/80 text-white px-3 py-1 rounded-md transition-all duration-300 text-sm">
+              <i class="fa fa-cogs mr-1"></i> 進入後台
+            </button>
             <button id="logoutBtn" class="bg-accent hover:bg-accent/80 text-white px-3 py-1 rounded-md transition-all duration-300 text-sm">
               <i class="fa fa-sign-out mr-1"></i>登出
             </button>
@@ -161,6 +168,10 @@
           </button>
           <div id="mobileUserInfo" class="hidden items-center justify-between bg-secondary/20 p-2 rounded-md">
             <span id="mobileUsernameDisplay" class="text-white font-kai"></span>
+            <!-- 新增進入後台按鈕 (移動端) -->
+            <button id="mobileAdminPanelBtn" class="hidden bg-accent hover:bg-accent/80 text-white px-3 py-1 rounded-md transition-all duration-300 text-sm">
+              <i class="fa fa-cogs mr-1"></i> 進入後台
+            </button>
             <button id="mobileLogoutBtn" class="bg-accent hover:bg-accent/80 text-white px-3 py-1 rounded-md transition-all duration-300 text-sm">
               <i class="fa fa-sign-out mr-1"></i>登出
             </button>
@@ -355,6 +366,7 @@
       <h2 class="text-primary font-kai text-2xl mb-6 text-center">使用者登入</h2>
       <form id="loginForm">
         <div class="space-y-4">
+          <!-- Google 登入按鈕 (如果需要 Firebase Google 登入，此處需整合) -->
           <button type="button" class="w-full bg-[#4285F4] hover:bg-[#4285F4]/90 text-white py-3 rounded-lg flex items-center justify-center transition-all duration-300 transform hover:scale-105">
             <i class="fa fa-google mr-2"></i> 使用 Google 帳號登入
           </button>
@@ -374,8 +386,10 @@
           <button id="emailLoginBtn" type="submit" class="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-lg transition-all duration-300 transform hover:scale-105">
             使用 Email 登入
           </button>
+          <!-- 錯誤訊息顯示區塊 -->
+          <p id="loginErrorMsg" class="text-center text-red-500 text-sm hidden"></p>
           <p class="text-center text-gray-600">
-            還沒有帳號？<a href="#" class="text-primary hover:underline">立即註冊</a>
+            還沒有帳號？<a href="#" id="registerLink" class="text-primary hover:underline">立即註冊</a>
           </p>
         </div>
       </form>
@@ -461,6 +475,18 @@
   <audio id="woodSound8" preload="auto" src="https://raw.githubusercontent.com/salina123001/Wooden-Fish/main/sounds/773570095.581433.mp3"></audio>
 
   <script>
+    // Firebase 配置 (請替換為您自己的專案配置)
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY", // 替換為您的 Firebase Web API Key
+      authDomain: "YOUR_AUTH_DOMAIN", // 替換為您的 Firebase Auth Domain
+      projectId: "YOUR_PROJECT_ID", // 替換為您的 Firebase Project ID
+      // 其他配置 (可選)
+    };
+
+    // 初始化 Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
     document.addEventListener('DOMContentLoaded', () => {
         const woodenFishData = {
           user: {
@@ -487,6 +513,7 @@
               { id: 7, name: "高級修行者", description: "累積20000功德", completed: false, reward: 2000 },
             ],
             taps: 0,
+            isAdmin: false, // 新增 isAdmin 狀態
           },
           
           skins: [
@@ -582,6 +609,8 @@
           closeLoginModal: document.getElementById('closeLoginModal'),
           emailLoginBtn: document.getElementById('emailLoginBtn'),
           emailInput: document.getElementById('email'),
+          passwordInput: document.getElementById('password'), // 新增密碼輸入框
+          loginErrorMsg: document.getElementById('loginErrorMsg'), // 新增錯誤訊息顯示元素
           skinsModal: document.getElementById('skinsModal'),
           skinsModalContent: document.getElementById('skinsModalContent'),
           closeSkinsModal: document.getElementById('closeSkinsModal'),
@@ -608,6 +637,9 @@
           closePrayForModal: document.getElementById('closePrayForModal'),
           prayForNameInput: document.getElementById('prayForNameInput'),
           confirmPrayForBtn: document.getElementById('confirmPrayForBtn'),
+          adminPanelBtn: document.getElementById('adminPanelBtn'), // 新增管理員按鈕
+          mobileAdminPanelBtn: document.getElementById('mobileAdminPanelBtn'), // 新增移動端管理員按鈕
+          registerLink: document.getElementById('registerLink'), // 註冊連結
         };
 
         let onConfirmCallback = null;
@@ -616,6 +648,28 @@
           loadUserData();
           updateAllUI();
           addEventListeners();
+          // 監聽 Firebase Authentication 狀態變化
+          auth.onAuthStateChanged(user => {
+            if (user) {
+              // 用戶已登入
+              woodenFishData.user.loggedIn = true;
+              woodenFishData.user.username = user.displayName || user.email.split('@')[0];
+              // 獲取 ID Token 並驗證管理員狀態
+              user.getIdToken().then(idToken => {
+                verifyAdminStatus(idToken);
+              }).catch(error => {
+                console.error("獲取 ID Token 失敗:", error);
+                showLoginError("獲取用戶資訊失敗，請重試。");
+              });
+            } else {
+              // 用戶已登出
+              woodenFishData.user.loggedIn = false;
+              woodenFishData.user.username = '訪客';
+              woodenFishData.user.isAdmin = false; // 重置管理員狀態
+            }
+            updateLoginStatusUI(); // 更新登入狀態 UI
+            loadLeaderboard(); // 重新載入排行榜以更新用戶名
+          });
         }
         
         function updateAllUI() {
@@ -656,6 +710,9 @@
             elements.otherPracticeBtn.addEventListener('click', setPracticeMode);
             elements.closePrayForModal.addEventListener('click', closePrayForModal);
             elements.confirmPrayForBtn.addEventListener('click', handleConfirmPrayFor);
+            elements.adminPanelBtn.addEventListener('click', () => { window.location.href = '/admin'; }); // 管理員按鈕點擊事件
+            elements.mobileAdminPanelBtn.addEventListener('click', () => { window.location.href = '/admin'; }); // 移動端管理員按鈕點擊事件
+            elements.registerLink.addEventListener('click', handleRegister); // 註冊連結點擊事件
         }
 
         function loadUserData() {
@@ -1212,34 +1269,121 @@
           return { messages: achievementMessages };
         }
 
-        function handleLogin(event) {
+        // 修改 handleLogin 函數以使用 Firebase Authentication
+        async function handleLogin(event) {
             event.preventDefault();
             const email = elements.emailInput.value;
-            if (!email) {
-                showTapMessage("請輸入Email");
+            const password = elements.passwordInput.value;
+            showLoginError(''); // 清除之前的錯誤訊息
+
+            if (!email || !password) {
+                showLoginError("請輸入 Email 和密碼。");
                 return;
             }
-            const username = email.split('@')[0];
-            woodenFishData.user.loggedIn = true;
-            woodenFishData.user.username = username;
 
-            updateLoginStatusUI();
-            closeLoginModal();
-            showTapMessage(`歡迎回來, ${username}`);
-            loadLeaderboard();
+            try {
+                const userCredential = await auth.signInWithEmailAndPassword(email, password);
+                const user = userCredential.user;
+                woodenFishData.user.loggedIn = true;
+                woodenFishData.user.username = user.displayName || user.email.split('@')[0];
+                closeLoginModal();
+                showTapMessage(`歡迎回來, ${woodenFishData.user.username}`);
+                
+                // 獲取 ID Token 並驗證管理員狀態
+                const idToken = await user.getIdToken();
+                await verifyAdminStatus(idToken); // 等待管理員狀態驗證完成
+                updateLoginStatusUI(); // 確保在管理員狀態更新後才更新 UI
+                loadLeaderboard();
+            } catch (error) {
+                console.error("登入失敗:", error);
+                let errorMessage = "登入失敗，請檢查您的 Email 和密碼。";
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = "Email 或密碼不正確。";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "Email 格式不正確。";
+                }
+                showLoginError(errorMessage);
+            }
         }
 
-        function handleLogout() {
-            showTapMessage(`${woodenFishData.user.username} 已登出`);
-            woodenFishData.user.loggedIn = false;
-            woodenFishData.user.username = '訪客';
-            updateLoginStatusUI();
-            loadLeaderboard();
+        // 新增註冊功能（簡易示範，實際應用中應有單獨的註冊頁面或更完善的流程）
+        async function handleRegister(event) {
+            event.preventDefault();
+            const email = elements.emailInput.value;
+            const password = elements.passwordInput.value;
+            showLoginError(''); // 清除之前的錯誤訊息
+
+            if (!email || !password) {
+                showLoginError("請輸入 Email 和密碼以註冊。");
+                return;
+            }
+            
+            if (password.length < 6) {
+                showLoginError("密碼至少需要 6 個字元。");
+                return;
+            }
+
+            try {
+                await auth.createUserWithEmailAndPassword(email, password);
+                showTapMessage("註冊成功！請登入。");
+                // 清空密碼欄位，讓用戶重新輸入登入
+                elements.passwordInput.value = '';
+            } catch (error) {
+                console.error("註冊失敗:", error);
+                let errorMessage = "註冊失敗，請重試。";
+                if (error.code === 'auth/email-already-in-use') {
+                    errorMessage = "此 Email 已被註冊。";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "Email 格式不正確。";
+                }
+                showLoginError(errorMessage);
+            }
+        }
+
+        // 修改 handleLogout 函數以使用 Firebase Authentication
+        async function handleLogout() {
+            try {
+                await auth.signOut();
+                showTapMessage(`${woodenFishData.user.username} 已登出`);
+                woodenFishData.user.loggedIn = false;
+                woodenFishData.user.username = '訪客';
+                woodenFishData.user.isAdmin = false; // 重置管理員狀態
+                updateLoginStatusUI();
+                loadLeaderboard();
+            } catch (error) {
+                console.error("登出失敗:", error);
+                showTapMessage("登出失敗，請重試。");
+            }
+        }
+
+        // 新增顯示登入錯誤訊息的函數
+        function showLoginError(message) {
+            elements.loginErrorMsg.textContent = message;
+            elements.loginErrorMsg.classList.toggle('hidden', !message);
+        }
+
+        // 新增驗證管理員狀態的函數
+        async function verifyAdminStatus(idToken) {
+            try {
+                const response = await fetch('/admin/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}`
+                    }
+                });
+                const data = await response.json();
+                woodenFishData.user.isAdmin = data.isAdmin;
+            } catch (error) {
+                console.error("驗證管理員狀態失敗:", error);
+                woodenFishData.user.isAdmin = false; // 發生錯誤時確保不是管理員
+            }
         }
 
         function updateLoginStatusUI() {
             const loggedIn = woodenFishData.user.loggedIn;
             const username = woodenFishData.user.username;
+            const isAdmin = woodenFishData.user.isAdmin; // 獲取管理員狀態
 
             elements.loginBtn.classList.toggle('hidden', loggedIn);
             elements.userInfo.classList.toggle('hidden', !loggedIn);
@@ -1250,6 +1394,10 @@
             elements.mobileUserInfo.classList.toggle('hidden', !loggedIn);
             elements.mobileUserInfo.classList.toggle('flex', loggedIn);
             elements.mobileUsernameDisplay.textContent = username;
+
+            // 根據管理員狀態顯示或隱藏「進入後台」按鈕
+            elements.adminPanelBtn.classList.toggle('hidden', !isAdmin);
+            elements.mobileAdminPanelBtn.classList.toggle('hidden', !isAdmin);
         }
 
         function openLoginModal() {
@@ -1258,6 +1406,7 @@
             elements.loginModalContent.classList.remove('scale-95', 'opacity-0');
             elements.loginModalContent.classList.add('scale-100', 'opacity-100');
           }, 10);
+          showLoginError(''); // 打開時清除錯誤訊息
         }
 
         function closeLoginModal() {
@@ -1531,7 +1680,7 @@
             loadMessages(); // 更新主頁面提示文字區塊
             loadMessagesShop(); // 更新商店彈出視窗
             checkCompletedAchievements();
-            showTapMessage(`成功解鎖 ${message.text}!`);
+            showTapMessage(`成功解鎖 ${message.name}!`);
             saveUserData();
           } else {
             showTapMessage(`功德不足，需要 ${message.price.toLocaleString()} 功德`);
